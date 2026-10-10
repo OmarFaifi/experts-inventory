@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon.png">
+<title>مخزون EXPERTS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+/* Layout: a branded header with the day's numbers, then the movement panel (stock in / stock out) beside a read-only bin grid of lettered rows and numbered columns, with the movement log underneath. Colours come from the EXPERTS logo: its green and its charcoal grey. */
+:root {
+  --bg: #F4F7F5;
+  --surface: #FFFFFF;
+  --ink: #1C2320;
+  --muted: #5D6762;
+  --line: #DAE3DE;
+  --head: #E9F3EE;
+  --hover: #F1F7F4;
+  --hit: #D7EFE3;
+  --brand: #1DA273;
+  --brand-strong: #137A55;
+  --on-brand: #FFFFFF;
+  --focus: #137A55;
+  --in: #137A55;
+  --in-bg: #E1F3EA;
+  --out: #A8431C;
+  --out-bg: #FBEAE2;
+  --on-out: #FFFFFF;
+  --danger: #B3261E;
+  --logo-l: block;
+  --logo-d: none;
+  --font-display: "Alexandria", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412; --surface: #151D1A; --ink: #E5ECE8; --muted: #9BA7A1; --line: #27332E;
+    --head: #1A2722; --hover: #1A2420; --hit: #1E3A2E; --brand: #2DBB86; --brand-strong: #2DBB86;
+    --on-brand: #08110D; --focus: #5ED3A2; --in: #5ED3A2; --in-bg: #163126; --out: #F2A27F;
+    --out-bg: #3A2118; --on-out: #1A0D07; --danger: #FF9C92; --logo-l: none; --logo-d: block;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412; --surface: #151D1A; --ink: #E5ECE8; --muted: #9BA7A1; --line: #27332E;
+  --head: #1A2722; --hover: #1A2420; --hit: #1E3A2E; --brand: #2DBB86; --brand-strong: #2DBB86;
+  --on-brand: #08110D; --focus: #5ED3A2; --in: #5ED3A2; --in-bg: #163126; --out: #F2A27F;
+  --out-bg: #3A2118; --on-out: #1A0D07; --danger: #FF9C92; --logo-l: none; --logo-d: block;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button:focus-visible, .cell:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.app {
+  max-width: 100rem; margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 36px); padding-block: clamp(16px, 3vw, 32px);
+  display: flex; flex-direction: column; gap: 1.25rem;
+}
+
+/* Sign-in */
+.boot { margin: 4rem 1rem; text-align: center; color: var(--muted); }
+.login { display: flex; justify-content: center; padding-inline: 16px; padding-block: clamp(32px, 10vh, 96px); }
+.login-card {
+  width: 100%; max-width: 24rem; display: flex; flex-direction: column; gap: 1rem;
+  background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--brand);
+  border-radius: 12px; padding: 1.5rem;
+}
+.login-card .logo { height: 3.6rem; align-self: center; }
+.login-card h1 { margin: 0; text-align: center; font: 600 1.3rem/1.4 var(--font-display); }
+.login-card .primary { align-self: stretch; }
+
+/* Header */
+.top {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem;
+  padding-bottom: 1.1rem; border-bottom: 3px solid var(--brand);
+}
+.brand { display: flex; align-items: center; gap: 1.1rem; min-width: 0; flex-wrap: wrap; }
+.logo { height: 3.9rem; width: auto; max-width: 100%; }
+.logo-l { display: var(--logo-l); }
+.logo-d { display: var(--logo-d); }
+.brand-text { display: flex; flex-direction: column; gap: .1rem; padding-inline-start: 1.1rem; border-inline-start: 1px solid var(--line); min-width: 0; }
+.brand-text h1 { margin: 0; font: 600 1.45rem/1.3 var(--font-display); text-wrap: balance; }
+.wh {
+  border: 0; border-bottom: 1px solid transparent; background: transparent; padding: 0;
+  font-size: .9rem; color: var(--muted); width: 14rem; max-width: 100%; text-align: right;
+}
+.wh::placeholder { color: var(--muted); opacity: .7; }
+.wh:hover:not(:read-only) { border-bottom-color: var(--line); }
+.wh:focus { outline: 0; border-bottom-color: var(--focus); color: var(--ink); }
+.stats { display: flex; flex-wrap: wrap; gap: .5rem 1.75rem; margin: 0; }
+.stats div { display: flex; flex-direction: column; }
+.stats dt { font-size: .78rem; color: var(--muted); }
+.stats dd { margin: 0; font: 600 1.35rem/1.3 var(--font-display); font-variant-numeric: tabular-nums; }
+.stats dd small { font: 400 .8rem var(--font-body); color: var(--muted); margin-inline-start: .2rem; }
+.stats .in dd { color: var(--in); }
+.stats .out dd { color: var(--out); }
+.statusline { display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center; margin-top: -.5rem; }
+.status { margin: 0; font-size: .85rem; color: var(--muted); }
+
+.layout { display: grid; grid-template-columns: minmax(16rem, 19.5rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* Movement panel */
+.panel {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  max-height: calc(100vh - 2rem); overflow: auto;
+  display: flex; flex-direction: column; gap: 1.1rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1rem 1.25rem; min-width: 0;
+}
+@media (max-width: 900px) { .panel { position: static; max-height: none; } }
+.panel-title { margin: 0; font: 600 1.05rem/1.4 var(--font-display); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; background: var(--bg); border-radius: 10px; padding: .3rem; }
+.seg button {
+  border: 0; border-radius: 8px; background: transparent; padding: .5rem .4rem; cursor: pointer;
+  font-weight: 500; color: var(--muted);
+}
+.seg button[aria-selected="true"].t-in { background: var(--in-bg); color: var(--in); }
+.seg button[aria-selected="true"].t-out { background: var(--out-bg); color: var(--out); }
+.form { display: flex; flex-direction: column; gap: .8rem; margin: 0; }
+.field { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.field > span, fieldset > legend { font-size: .8rem; color: var(--muted); }
+.req { color: var(--danger); font-style: normal; }
+.input {
+  width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: 8px; padding: .5rem .65rem; font-size: .95rem;
+}
+textarea.input { resize: vertical; min-height: 3.6rem; line-height: 1.5; }
+.input:focus { outline: 2px solid var(--focus); outline-offset: -1px; }
+.input:disabled { opacity: .55; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: .4rem; }
+.person { border-top: 1px dashed var(--line); padding-top: .7rem; }
+.where-row { display: flex; align-items: flex-end; gap: .55rem; }
+.where-row .field { flex: 1 1 0; }
+.where-row select { font-family: var(--font-mono); }
+.addr {
+  flex: none; font-family: var(--font-mono); font-size: 1.45rem; font-weight: 500; line-height: 1.6;
+  min-width: 3.4ch; text-align: center; border-bottom: 2px solid var(--brand); padding: 0 .25rem;
+}
+.tiny { margin: 0; font-size: .78rem; color: var(--muted); }
+.hintbox { margin: 0; font-size: .8rem; color: var(--ink); background: var(--head); border-radius: 8px; padding: .4rem .6rem; }
+.err { margin: 0; font-size: .85rem; color: var(--danger); }
+.primary {
+  border: 0; border-radius: 999px; padding: .6rem 1.25rem; font-weight: 600; cursor: pointer; align-self: flex-start;
+}
+.primary.in { background: var(--in); color: var(--on-brand); }
+.primary.out { background: var(--out); color: var(--on-out); }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: .35rem .95rem; font-size: .85rem; cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--brand); background: var(--head); }
+.btn.danger { color: var(--danger); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--brand-strong); cursor: pointer; text-align: start; font-weight: 500; }
+.linkbtn:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.contents, .detail { display: flex; flex-direction: column; gap: .55rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.contents h3, .detail h3 { margin: 0; font: 600 .95rem/1.4 var(--font-body); }
+.contents h3 bdi { font-family: var(--font-mono); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
+.line {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .1rem .6rem; align-items: baseline;
+  text-align: start; border: 1px solid var(--line); border-radius: 8px; background: transparent;
+  padding: .5rem .65rem; cursor: pointer;
+}
+.line:hover { background: var(--hover); }
+.line .nm { overflow-wrap: anywhere; font-size: .9rem; }
+.line .cd { grid-column: 1; font: .75rem var(--font-mono); color: var(--muted); }
+.line .bal { grid-row: 1 / span 2; grid-column: 2; font: 500 1rem var(--font-mono); text-align: end; }
+.line .bal small { display: block; font: .72rem var(--font-body); color: var(--muted); }
+.line.zero .bal { color: var(--muted); }
+.empty { margin: 0; font-size: .85rem; color: var(--muted); }
+.back { align-self: flex-start; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3rem .9rem; margin: 0; font-size: .875rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.bigbal { font: 600 1.6rem/1.2 var(--font-mono); }
+.actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.detail h4 { margin: .4rem 0 0; font-size: .82rem; color: var(--muted); font-weight: 500; }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hist li .del { grid-column: 3; grid-row: 1; align-self: start; }
+.hist li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .1rem .6rem; padding: .5rem 0; border-top: 1px solid var(--line); font-size: .82rem; }
+.hist li:first-child { border-top: 0; }
+.hist .who { overflow-wrap: anywhere; }
+.hist .when, .hist .nt { grid-column: 2; color: var(--muted); font-size: .76rem; overflow-wrap: anywhere; }
+
+.pill { display: inline-block; font-size: .74rem; font-weight: 600; border-radius: 999px; padding: .05rem .55rem; line-height: 1.7; white-space: nowrap; }
+.pill.in { background: var(--in-bg); color: var(--in); }
+.pill.out { background: var(--out-bg); color: var(--out); }
+.q-in { color: var(--in); }
+.q-out { color: var(--out); }
+
+/* Grid side */
+.main { display: flex; flex-direction: column; gap: .9rem; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: .65rem 1.2rem; align-items: center; }
+.search { flex: 1 1 14rem; display: flex; align-items: center; gap: .6rem; min-width: 0; max-width: 26rem; }
+.search .input { border-radius: 999px; padding-inline: .9rem; background: var(--surface); }
+.found { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.tools { display: flex; flex-wrap: wrap; gap: .6rem 1.1rem; align-items: center; margin-inline-start: auto; }
+.stepper { display: inline-flex; align-items: center; gap: .35rem; }
+.stepper-label { color: var(--muted); font-size: .85rem; margin-inline-end: .15rem; }
+.stepper button {
+  width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font: 500 .95rem/1 var(--font-mono); cursor: pointer;
+}
+.stepper button:hover:not(:disabled) { border-color: var(--brand); background: var(--head); }
+.stepper output { font-family: var(--font-mono); min-width: 2.6ch; text-align: center; }
+.menu { position: relative; }
+.menu-pop {
+  position: absolute; inset-inline-end: 0; top: calc(100% + .4rem); z-index: 10;
+  display: flex; flex-direction: column; min-width: 13rem; padding: .35rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(10, 30, 20, .14);
+}
+.menu-pop button { border: 0; background: none; text-align: start; padding: .5rem .6rem; border-radius: 6px; cursor: pointer; font-size: .875rem; }
+.menu-pop button:hover { background: var(--hover); }
+.menu-pop small { display: block; color: var(--muted); font-size: .75rem; }
+.note { margin: 0; align-self: flex-start; background: var(--head); color: var(--ink); border-radius: 8px; padding: .5rem .85rem; font-size: .875rem; }
+.note.warn { color: var(--danger); }
+
+.sheet { overflow: auto; max-height: min(70vh, 56rem); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.grid { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: max(100%, calc(3rem + var(--cols, 10) * 5.5rem)); }
+.grid .col-head { width: 3rem; }
+.grid th, .grid td { padding: 0; border-inline-end: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.grid tr > :last-child { border-inline-end: 0; }
+.grid tbody tr:last-child > * { border-bottom: 0; }
+.grid thead th, .grid tbody th, .grid .corner {
+  background: var(--head); color: var(--muted); font: 500 .85rem/1 var(--font-mono);
+  font-variant-numeric: tabular-nums; text-align: center;
+}
+.grid thead th, .grid .corner { position: sticky; top: 0; z-index: 2; height: 2.25rem; }
+.grid tbody th { position: sticky; inset-inline-start: 0; z-index: 1; }
+.grid .corner { inset-inline-start: 0; z-index: 3; }
+.grid th.on { background: var(--brand-strong); color: var(--on-brand); }
+.grid td { vertical-align: top; background: var(--surface); height: 1px; }
+.cell {
+  display: flex; flex-direction: column; gap: .25rem; width: 100%; height: 100%; min-height: 3.4rem;
+  border: 0; background: transparent; color: var(--ink); text-align: start; padding: .45rem .5rem; cursor: pointer;
+}
+.cell:hover { background: var(--hover); }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--brand); }
+.cell.hit { background: var(--hit); }
+.cell.dim > * { opacity: .3; }
+.it { display: flex; flex-wrap: wrap; column-gap: .35rem; align-items: baseline; justify-content: space-between; font-size: .8rem; line-height: 1.35; min-width: 0; }
+.it .nm { overflow-wrap: break-word; min-width: 0; max-width: 100%; }
+.it .q { font: 500 .75rem var(--font-mono); color: var(--brand-strong); flex: none; }
+.it.zero .nm, .it.zero .q { color: var(--muted); }
+.more { font-size: .72rem; color: var(--muted); }
+
+/* Movement log */
+.log { display: flex; flex-direction: column; gap: .7rem; margin-top: .6rem; }
+.log-head { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.log-head h2 { margin: 0; font: 600 1.15rem/1.4 var(--font-display); margin-inline-end: auto; }
+.chips { display: flex; gap: .35rem; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: .25rem .8rem; font-size: .82rem; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.log-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.moves { border-collapse: collapse; width: 100%; min-width: 56rem; font-size: .85rem; }
+.moves th { text-align: start; font-weight: 500; color: var(--muted); font-size: .78rem; background: var(--head); padding: .55rem .7rem; white-space: nowrap; }
+.moves td { padding: .55rem .7rem; border-top: 1px solid var(--line); vertical-align: top; }
+.moves td small { display: block; color: var(--muted); font-size: .75rem; }
+.moves .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.moves .nt { color: var(--muted); max-width: 16rem; overflow-wrap: anywhere; }
+.del {
+  border: 1px solid transparent; background: none; color: var(--danger); font-size: .8rem;
+  cursor: pointer; padding: .15rem .5rem; border-radius: 999px; white-space: nowrap;
+}
+.del:hover { border-color: var(--danger); }
+.del.armed { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.del:disabled { opacity: .5; cursor: default; }
+.more-btn { align-self: center; }
+.hint { margin: 0; color: var(--muted); font-size: .85rem; max-width: 72ch; }
+.fallback { width: 100%; min-height: 6rem; padding: .6rem .7rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: .8rem/1.5 var(--font-mono); }
+[hidden] { display: none !important; }
+body { margin: 0; }
+</style>
+</head>
+<body>
+
+<p class="boot" id="boot">جارٍ التحميل…</p>
+
+<main class="login" id="login" dir="rtl" lang="ar" hidden>
+  <form class="login-card" id="login-form" novalidate>
+    <img class="logo logo-l" src="logo-light.png" alt="EXPERTS — الخبراء للصناعات والتصميم الإلكتروني" width="424" height="150">
+    <img class="logo logo-d" src="logo-dark.png" alt="EXPERTS — الخبراء للصناعات والتصميم الإلكتروني" width="424" height="150">
+    <h1>نظام المخزون</h1>
+    <label class="field" for="login-email"><span>البريد الإلكتروني</span>
+      <input class="input" id="login-email" type="email" autocomplete="username" dir="ltr" required></label>
+    <label class="field" for="login-pass"><span>كلمة المرور</span>
+      <input class="input" id="login-pass" type="password" autocomplete="current-password" dir="ltr" required></label>
+    <p class="err" id="login-err" role="alert" hidden></p>
+    <button type="submit" class="primary in" id="login-btn">دخول</button>
+  </form>
+</main>
+
+<div class="app" id="app-root" dir="rtl" lang="ar" hidden>
+  <header class="top">
+    <div class="brand">
+      <img class="logo logo-l" src="logo-light.png" alt="EXPERTS — الخبراء للصناعات والتصميم الإلكتروني" width="424" height="150">
+      <img class="logo logo-d" src="logo-dark.png" alt="EXPERTS — الخبراء للصناعات والتصميم الإلكتروني" width="424" height="150">
+      <div class="brand-text">
+        <h1>نظام المخزون</h1>
+        <input id="wh-name" class="wh" type="text" maxlength="80" dir="rtl" autocomplete="off"
+               placeholder="اسم المستودع" aria-label="اسم المستودع" readonly>
+      </div>
+    </div>
+    <dl class="stats">
+      <div><dt>أصناف متوفرة</dt><dd id="st-items">0</dd></div>
+      <div><dt>خانات مشغولة</dt><dd id="st-cells">0</dd></div>
+      <div class="in"><dt>وارد اليوم</dt><dd id="st-in">0</dd></div>
+      <div class="out"><dt>صادر اليوم</dt><dd id="st-out">0</dd></div>
+    </dl>
+  </header>
+  <div class="statusline">
+    <p class="status" id="status" role="status">جارٍ التحميل…</p>
+    <button type="button" class="linkbtn" id="logout">تسجيل الخروج</button>
+  </div>
+
+  <div class="layout">
+    <aside class="panel" aria-label="حركة المخزون">
+      <h2 class="panel-title" id="panel-title" hidden>محتوى الخانة</h2>
+      <div class="seg" role="tablist" aria-label="نوع الحركة" id="seg">
+        <button type="button" role="tab" id="tab-in" class="t-in" aria-selected="true" aria-controls="form-in">إدخال مخزون</button>
+        <button type="button" role="tab" id="tab-out" class="t-out" aria-selected="false" aria-controls="form-out">إخراج مخزون</button>
+      </div>
+
+      <fieldset id="where">
+        <legend>الخانة</legend>
+        <div class="where-row">
+          <label class="field" for="f-row"><span>الصف</span><select class="input" id="f-row" disabled></select></label>
+          <label class="field" for="f-col"><span>العمود</span><select class="input" id="f-col" disabled></select></label>
+          <output class="addr" id="f-addr" dir="ltr">A1</output>
+        </div>
+        <p class="tiny">أو اضغط على الخانة في الجدول.</p>
+      </fieldset>
+
+      <form class="form" id="form-in" role="tabpanel" aria-labelledby="tab-in" novalidate>
+        <label class="field" for="in-name"><span>اسم الصنف <i class="req">*</i></span>
+          <input class="input" id="in-name" type="text" list="dl-names" maxlength="200" dir="auto" autocomplete="off" disabled></label>
+        <p class="hintbox" id="in-match" hidden></p>
+        <div class="two">
+          <label class="field" for="in-code"><span>رقم الصنف</span>
+            <input class="input mono" id="in-code" type="text" maxlength="60" dir="auto" autocomplete="off" disabled></label>
+          <label class="field" for="in-unit"><span>الوحدة</span>
+            <input class="input" id="in-unit" type="text" list="dl-units" maxlength="30" dir="auto" autocomplete="off" disabled></label>
+        </div>
+        <label class="field" for="in-qty"><span>الكمية الداخلة <i class="req">*</i></span>
+          <input class="input mono" id="in-qty" type="text" inputmode="decimal" maxlength="14" dir="ltr" autocomplete="off" disabled></label>
+        <fieldset class="person">
+          <legend>من سلّم المخزون</legend>
+          <div class="two">
+            <label class="field" for="in-pname"><span>الاسم <i class="req">*</i></span>
+              <input class="input" id="in-pname" type="text" list="dl-people" maxlength="120" dir="auto" autocomplete="off" disabled></label>
+            <label class="field" for="in-pphone"><span>الجوال</span>
+              <input class="input mono" id="in-pphone" type="tel" inputmode="tel" maxlength="30" dir="ltr" autocomplete="off" disabled></label>
+          </div>
+        </fieldset>
+        <label class="field" for="in-note"><span>ملاحظات</span>
+          <textarea class="input" id="in-note" rows="2" maxlength="1000" dir="auto" disabled></textarea></label>
+        <p class="err" id="in-err" role="alert" hidden></p>
+        <button type="submit" class="primary in" id="in-submit" disabled>سجّل الإدخال</button>
+      </form>
+
+      <form class="form" id="form-out" role="tabpanel" aria-labelledby="tab-out" novalidate hidden>
+        <label class="field" for="out-item"><span>الصنف <i class="req">*</i></span>
+          <select class="input" id="out-item" disabled></select></label>
+        <p class="tiny" id="out-empty" hidden>لا يوجد مخزون متوفر في هذه الخانة. اختر خانة أخرى.</p>
+        <label class="field" for="out-qty"><span>الكمية الخارجة <i class="req">*</i></span>
+          <input class="input mono" id="out-qty" type="text" inputmode="decimal" maxlength="14" dir="ltr" autocomplete="off" disabled></label>
+        <p class="tiny" id="out-avail"></p>
+        <fieldset class="person">
+          <legend>من استلم المخزون</legend>
+          <div class="two">
+            <label class="field" for="out-pname"><span>الاسم <i class="req">*</i></span>
+              <input class="input" id="out-pname" type="text" list="dl-people" maxlength="120" dir="auto" autocomplete="off" disabled></label>
+            <label class="field" for="out-pphone"><span>الجوال</span>
+              <input class="input mono" id="out-pphone" type="tel" inputmode="tel" maxlength="30" dir="ltr" autocomplete="off" disabled></label>
+          </div>
+        </fieldset>
+        <label class="field" for="out-note"><span>الغرض أو ملاحظات</span>
+          <textarea class="input" id="out-note" rows="2" maxlength="1000" dir="auto" disabled></textarea></label>
+        <p class="err" id="out-err" role="alert" hidden></p>
+        <button type="submit" class="primary out" id="out-submit" disabled>سجّل الإخراج</button>
+      </form>
+
+      <section class="contents" id="contents" aria-live="polite">
+        <h3>في الخانة <bdi id="c-addr" dir="ltr">A1</bdi></h3>
+        <ul class="list" id="c-list"></ul>
+        <p class="empty" id="c-empty">لا مخزون في هذه الخانة.</p>
+      </section>
+
+      <section class="detail" id="detail" hidden>
+        <button type="button" class="btn back" id="d-back">رجوع إلى الخانة</button>
+        <h3 id="d-name"></h3>
+        <dl class="kv">
+          <dt>الرصيد</dt><dd><span class="bigbal" id="d-bal">0</span> <span id="d-unit"></span></dd>
+          <dt>رقم الصنف</dt><dd class="mono" id="d-code">—</dd>
+          <dt>الخانة</dt><dd class="mono" id="d-cell" dir="ltr"></dd>
+          <dt>آخر حركة</dt><dd id="d-last">—</dd>
+          <dt id="d-note-k">ملاحظات</dt><dd id="d-note">—</dd>
+        </dl>
+        <div class="actions" id="d-actions">
+          <button type="button" class="btn" id="d-in">إدخال كمية</button>
+          <button type="button" class="btn" id="d-out">إخراج كمية</button>
+          <button type="button" class="btn" id="d-edit">تعديل البيانات</button>
+        </div>
+        <form class="form" id="d-form" novalidate hidden>
+          <label class="field" for="e-name"><span>اسم الصنف <i class="req">*</i></span>
+            <input class="input" id="e-name" type="text" maxlength="200" dir="auto" autocomplete="off"></label>
+          <div class="two">
+            <label class="field" for="e-code"><span>رقم الصنف</span>
+              <input class="input mono" id="e-code" type="text" maxlength="60" dir="auto" autocomplete="off"></label>
+            <label class="field" for="e-unit"><span>الوحدة</span>
+              <input class="input" id="e-unit" type="text" list="dl-units" maxlength="30" dir="auto" autocomplete="off"></label>
+          </div>
+          <label class="field" for="e-note"><span>ملاحظات</span>
+            <textarea class="input" id="e-note" rows="2" maxlength="1000" dir="auto"></textarea></label>
+          <p class="err" id="e-err" role="alert" hidden></p>
+          <div class="actions">
+            <button type="submit" class="btn" id="e-save">احفظ البيانات</button>
+            <button type="button" class="btn" id="e-cancel">إلغاء</button>
+            <button type="button" class="btn danger" id="e-delete" hidden>احذف الصنف من الخانة</button>
+          </div>
+          <p class="tiny">تعديل البيانات لا يغيّر الرصيد. الرصيد يتغيّر بالإدخال والإخراج فقط.</p>
+        </form>
+        <h4>آخر حركات هذا الصنف</h4>
+        <ul class="hist" id="d-moves"></ul>
+        <p class="empty" id="d-moves-empty" hidden>لا حركات مسجّلة.</p>
+      </section>
+    </aside>
+
+    <section class="main" aria-label="الخانات والسجل">
+      <div class="bar">
+        <div class="search">
+          <input class="input" id="q" type="search" dir="auto" autocomplete="off" placeholder="ابحث باسم الصنف أو رقمه…" aria-label="ابحث باسم الصنف أو رقمه">
+          <span class="found" id="found" aria-live="polite"></span>
+        </div>
+        <div class="tools">
+          <div class="stepper" role="group" aria-label="عدد الأعمدة" id="col-stepper">
+            <span class="stepper-label">الأعمدة</span>
+            <button type="button" id="col-minus" aria-label="احذف آخر عمود" disabled>−</button>
+            <output id="col-count">10</output>
+            <button type="button" id="col-plus" aria-label="أضف عموداً" disabled>+</button>
+          </div>
+          <div class="stepper" role="group" aria-label="عدد الصفوف" id="row-stepper">
+            <span class="stepper-label">الصفوف</span>
+            <button type="button" id="row-minus" aria-label="احذف آخر صف" disabled>−</button>
+            <output id="row-count">10</output>
+            <button type="button" id="row-plus" aria-label="أضف صفاً" disabled>+</button>
+          </div>
+          <button type="button" class="btn" id="dir-toggle" disabled>ابدأ الترقيم من اليسار</button>
+          <div class="menu">
+            <button type="button" class="btn" id="export-btn" aria-haspopup="true" aria-expanded="false">تصدير إلى Excel</button>
+            <div class="menu-pop" id="export-menu" hidden>
+              <button type="button" data-export="stock">أرصدة المخزون<small>كل صنف وخانته ورصيده الحالي</small></button>
+              <button type="button" data-export="moves">سجل الحركات<small>آخر 1000 حركة إدخال وإخراج</small></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note" id="note" role="status" hidden></p>
+
+      <div class="sheet" id="sheet" dir="rtl">
+        <table class="grid" id="grid" aria-label="خانات المستودع: الأعمدة بالأرقام والصفوف بالأحرف"></table>
+      </div>
+
+      <section class="log" aria-labelledby="log-title">
+        <div class="log-head">
+          <h2 id="log-title">سجل الحركات</h2>
+          <div class="chips" role="group" aria-label="تصفية السجل">
+            <button type="button" class="chip" data-filter="all" aria-pressed="true">الكل</button>
+            <button type="button" class="chip" data-filter="in" aria-pressed="false">وارد</button>
+            <button type="button" class="chip" data-filter="out" aria-pressed="false">صادر</button>
+          </div>
+        </div>
+        <div class="log-wrap">
+          <table class="moves">
+            <thead><tr>
+              <th scope="col">التاريخ</th><th scope="col">النوع</th><th scope="col">الصنف</th><th scope="col">الخانة</th>
+              <th scope="col">الكمية</th><th scope="col">الرصيد بعدها</th><th scope="col">الشخص</th><th scope="col">الجوال</th><th scope="col">ملاحظات</th>
+              <th scope="col" id="log-act-head" aria-label="حذف الحركة"></th>
+            </tr></thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+        <p class="empty" id="log-empty">لم تُسجَّل أي حركة بعد. ابدأ بإدخال أول صنف من النموذج.</p>
+        <button type="button" class="btn more-btn" id="log-more" hidden>عرض المزيد</button>
+      </section>
+
+      <textarea class="fallback" id="copy-fallback" dir="ltr" readonly hidden aria-label="نص الملف للنسخ"></textarea>
+
+      <p class="hint" id="hint">
+        الخانات للعرض فقط، وكل تغيير في الرصيد يمر عبر الإدخال أو الإخراج ويُسجَّل باسم الشخص ووقته.
+        لحذف حركة خاطئة اضغط «حذف» بجانبها في السجل ثم أكّد، فتُحذف ويُعدَّل رصيد الصنف تلقائياً.
+      </p>
+    </section>
+  </div>
+
+  <datalist id="dl-names"></datalist>
+  <datalist id="dl-people"></datalist>
+  <datalist id="dl-units"></datalist>
+</div>
+
+<script src="supabase.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var MAXR = 104, MAXC = 60, MAXCELL = 3, LS_KEY = "experts-inventory-v1";
+  var UNITS = ["حبة", "قطعة", "كرتون", "علبة", "طقم", "متر", "رول", "لوح", "كيلو", "لتر"];
+  var HOLDER = "h" + Math.random().toString(36).slice(2, 10);
+  var $ = function (id) { return document.getElementById(id); };
+
+  var S = { rows: 10, cols: 10, title: "", dir: "rtl" };
+  var stock = new Map(), moves = [], people = new Map();
+  var sel = { row: "A", col: 1 }, tab = "in", openId = null, query = "", logFilter = "all", logLimit = 50;
+  var db = null, store = null, mode = null, ready = false, readOnly = false, loadError = "", pending = 0, downloads = null;
+  var builtSig = "", noteTimer = 0, histToken = 0, histCache = null, inBusy = false, outBusy = false, delArmed = false, delTimer = 0;
+  var armedMove = null, armTimer = 0, moveDelBusy = false;
+  var metaTimer = 0, metaInflight = false, metaAgain = false, metaDirty = false;
+
+  /* ---------- helpers ---------- */
+  function rowLabel(i) {
+    var s = ""; i += 1;
+    while (i > 0) { var r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); }
+    return s;
+  }
+  function rowIndex(label) {
+    var n = 0;
+    for (var k = 0; k < label.length; k++) n = n * 26 + (label.charCodeAt(k) - 64);
+    return n - 1;
+  }
+  function validRow(id) { return /^[A-Z]{1,2}$/.test(id) && rowIndex(id) < MAXR; }
+  function clampInt(v, min, max, def) { var n = Math.round(Number(v)); return isFinite(n) ? Math.min(max, Math.max(min, n)) : def; }
+  function str(v, n) { return (typeof v === "string" || typeof v === "number") ? String(v).trim().slice(0, n) : ""; }
+  var AR = "٠١٢٣٤٥٦٧٨٩", FA = "۰۱۲۳۴۵۶۷۸۹";
+  function latin(s) {
+    return String(s == null ? "" : s)
+      .replace(/[٠-٩]/g, function (d) { return AR.indexOf(d); })
+      .replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); });
+  }
+  function r3(n) { return Math.round(n * 1000) / 1000; }
+  function parseQty(s) {
+    var t = latin(s).replace(/٫/g, ".").replace(/[,،\s]/g, "");
+    if (!/^\d*\.?\d+$/.test(t)) return NaN;
+    return r3(parseFloat(t));
+  }
+  function fmtQty(n) { return Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 3 }); }
+  function norm(s) {
+    return latin(s).toLowerCase()
+      .replace(/[ً-ْـ]/g, "")
+      .replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي")
+      .replace(/\s+/g, " ").trim();
+  }
+  var dF = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", day: "2-digit", month: "2-digit", year: "numeric" });
+  var tF = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", hour: "numeric", minute: "2-digit", hour12: true });
+  var isoF = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh", day: "2-digit", month: "2-digit", year: "numeric" });
+  function fmtDate(iso) { var d = new Date(iso); return isNaN(d) ? "" : dF.format(d).split("/").join(" / "); }
+  function fmtTime(iso) { var d = new Date(iso); return isNaN(d) ? "" : tF.format(d).replace("AM", "ص").replace("PM", "م"); }
+  function dayKey(iso) { var d = new Date(iso); return isNaN(d) ? "" : isoF.format(d); }
+  function wait(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function cleanStock(d) {
+    if (!d || typeof d !== "object") return null;
+    var name = str(d.name, 200), row = String(d.row || "").toUpperCase(), col = Math.round(Number(d.col)), qty = Number(d.qty);
+    if (!name || !validRow(row) || !(col >= 1 && col <= MAXC)) return null;
+    return { name: name, code: str(d.code, 60), unit: str(d.unit, 30), note: str(d.note, 1000), row: row, col: col,
+             qty: isFinite(qty) ? r3(qty) : 0, createdAt: str(d.createdAt, 40), updatedAt: str(d.updatedAt, 40), lastMoveAt: str(d.lastMoveAt, 40) };
+  }
+  function cleanMove(d) {
+    if (!d || typeof d !== "object") return null;
+    var type = d.type === "in" ? "in" : d.type === "out" ? "out" : null, qty = Number(d.qty);
+    if (!type || !(qty > 0)) return null;
+    var p = d.person && typeof d.person === "object" ? d.person : {}, after = Number(d.after);
+    return { type: type, stockId: str(d.stockId, 200), name: str(d.name, 200), code: str(d.code, 60), unit: str(d.unit, 30),
+             row: String(d.row || "").toUpperCase().slice(0, 2), col: Math.round(Number(d.col)) || 0, qty: r3(qty),
+             after: d.after != null && isFinite(after) ? r3(after) : null,
+             pname: str(p.name, 120), pphone: str(p.phone, 30), note: str(d.note, 1000), at: str(d.at, 40) };
+  }
+  function cleanPerson(d) {
+    if (!d || typeof d !== "object") return null;
+    var name = str(d.name, 120);
+    return name ? { name: name, phone: str(d.phone, 30) } : null;
+  }
+  function byAtDesc(a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; }
+
+  function dims() {
+    var r = S.rows, c = S.cols;
+    stock.forEach(function (s) { r = Math.max(r, rowIndex(s.row) + 1); c = Math.max(c, s.col); });
+    return { r: Math.min(r, MAXR), c: Math.min(c, MAXC) };
+  }
+  function byCell() {
+    var m = new Map();
+    stock.forEach(function (s, id) {
+      var k = s.row + s.col;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push({ id: id, s: s });
+    });
+    m.forEach(function (l) {
+      l.sort(function (a, b) { return (b.s.qty > 0) - (a.s.qty > 0) || a.s.name.localeCompare(b.s.name, "ar"); });
+    });
+    return m;
+  }
+  function findLine(row, col, name, code) {
+    var n = norm(name), c = norm(code), hit = null;
+    stock.forEach(function (s, id) {
+      if (hit || s.row !== row || s.col !== col || norm(s.name) !== n) return;
+      if (c && s.code && norm(s.code) !== c) return;
+      hit = { id: id, s: s };
+    });
+    return hit;
+  }
+  function canEdit() { return ready && !readOnly; }
+  function matchesStock(s) { return !!query && norm(s.name + " " + s.code + " " + s.note).indexOf(query) !== -1; }
+  function matchesMove(m) { return !query || norm(m.name + " " + m.code + " " + m.pname + " " + m.pphone + " " + m.note).indexOf(query) !== -1; }
+
+  /* ---------- Supabase: the database, sign-in and live updates ---------- */
+  var SUPABASE_URL = "https://fdebrcuhmtyhmdobsstg.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_Y3QCmQIXgcaqGn1pZ_CZAw_NMyEeJS2";  // public key: safe in the page, data is protected by the database rules
+  var sb = null;
+  function toStock(r) {
+    return cleanStock({ name: r.name, code: r.code, unit: r.unit, note: r.note, row: r.row_label, col: r.col_no,
+                        qty: Number(r.qty), createdAt: r.created_at, updatedAt: r.updated_at, lastMoveAt: r.last_move_at || "" });
+  }
+  function toMove(r) {
+    var m = cleanMove({ type: r.type, stockId: r.stock_id || "", name: r.name, code: r.code, unit: r.unit, row: r.row_label,
+                        col: r.col_no, qty: Number(r.qty), after: r.balance_after == null ? null : Number(r.balance_after),
+                        person: { name: r.person_name, phone: r.person_phone }, note: r.note, at: r.at });
+    if (m) m.id = r.id;
+    return m;
+  }
+  function sbError(error) {
+    var msg = String((error && error.message) || ""), m;
+    if ((m = msg.match(/insufficient:([\d.]+)/))) return { code: "insufficient", avail: Number(m[1]) };
+    if ((m = msg.match(/cant_undo_in:([\d.]+)/))) return { code: "cant_undo_in", avail: Number(m[1]) };
+    if (/\bgone\b/.test(msg)) return { code: "gone" };
+    if (/not_allowed/.test(msg)) return { code: "not_allowed" };
+    if (/jwt|session/i.test(msg) || (error && (error.code === "PGRST301" || error.status === 401))) return { code: "auth" };
+    return { code: "unavailable", message: msg };
+  }
+  async function q(promise) {
+    var res = await promise;
+    if (res.error) throw sbError(res.error);
+    return res.data;
+  }
+  var store = {
+    update: function (c, id, d) {
+      var row = { updated_at: new Date().toISOString() };
+      ["name", "code", "unit", "note"].forEach(function (k) { if (k in d) row[k] = d[k]; });
+      return q(sb.from("stock").update(row).eq("id", id)).then(function (r) { scheduleReload(0); return r; });
+    },
+    del: function (c, id) { return q(sb.from(c).delete().eq("id", id)).then(function (r) { scheduleReload(0); return r; }); },
+    history: async function (id) {
+      var rows = await q(sb.from("moves").select("*").eq("stock_id", id).order("at", { ascending: false }).limit(100));
+      return rows.map(toMove).filter(Boolean);
+    },
+    allMoves: async function () {
+      var rows = await q(sb.from("moves").select("*").order("at", { ascending: false }).limit(1000));
+      return rows.map(toMove).filter(Boolean);
+    },
+    saveMeta: function () {
+      return q(sb.from("settings").update({ title: S.title, rows: S.rows, cols: S.cols, dir: S.dir,
+                                             updated_at: new Date().toISOString() }).eq("id", 1));
+    }
+  };
+  async function loadAll() {
+    var r = await Promise.all([
+      q(sb.from("stock").select("*").limit(5000)),
+      q(sb.from("moves").select("*").order("at", { ascending: false }).limit(300)),
+      q(sb.from("people").select("id,name,phone").limit(5000)),
+      q(sb.from("settings").select("*").eq("id", 1).maybeSingle())
+    ]);
+    var nextStock = new Map();
+    r[0].forEach(function (row) { var s = toStock(row); if (s) nextStock.set(row.id, s); });
+    stock = nextStock;
+    moves = r[1].map(toMove).filter(Boolean).sort(byAtDesc);
+    var nextPeople = new Map();
+    r[2].forEach(function (row) { var p = cleanPerson(row); if (p) nextPeople.set(row.id, p); });
+    people = nextPeople;
+    if (r[3] && !metaDirty) applyMeta(r[3]);
+    if (openId && !stock.has(openId)) { openId = null; histCache = null; }
+  }
+  var reloadTimer = 0, reloading = false, reloadAgain = false;
+  function scheduleReload(ms) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reload, ms == null ? 350 : ms);
+  }
+  async function reload() {
+    if (!ready) return;
+    if (reloading) { reloadAgain = true; return; }
+    reloading = true;
+    try { await loadAll(); }
+    catch (e) {
+      reloading = false;
+      if (e && e.code === "auth") { showLogin("انتهت الجلسة. سجّل الدخول مرة أخرى."); return; }
+      return;
+    }
+    reloading = false;
+    render();
+    if (openId && histCache) { var id = openId; store.history(id).then(function (l) { if (openId === id) { histCache = { id: id, list: l }; paintDetail(); } }, function () {}); }
+    if (reloadAgain) { reloadAgain = false; scheduleReload(0); }
+  }
+  function applyMeta(d) {
+    if (!d || typeof d !== "object") return;
+    S.rows = clampInt(d.rows, 1, MAXR, S.rows);
+    S.cols = clampInt(d.cols, 1, MAXC, S.cols);
+    S.dir = d.dir === "ltr" ? "ltr" : "rtl";
+    S.title = typeof d.title === "string" ? d.title.slice(0, 80) : "";
+  }
+
+  /* ---------- errors and saving ---------- */
+  function isTransient(e) { var c = e && e.code; return !c || c === "unavailable" || c === "resource_exhausted"; }
+  async function retry(fn) {
+    try { return await fn(); }
+    catch (e) { if (!isTransient(e)) throw e; await wait(800 + Math.random() * 1200); return fn(); }
+  }
+  async function run(fn) {
+    pending++; updateStatus();
+    try { return await fn(); } finally { pending--; updateStatus(); }
+  }
+  function errText(e) {
+    var c = e && e.code;
+    if (c === "busy") return "هذا الصنف يُحدَّث الآن من جهاز آخر. أعد المحاولة بعد لحظات.";
+    if (c === "insufficient") return "الكمية المتوفرة " + fmtQty(e.avail) + (e.unit ? " " + e.unit : "") + " فقط.";
+    if (c === "gone") return "هذا الصنف لم يعد موجوداً في الخانة.";
+    if (c === "move_log_failed") return "تغيّر الرصيد لكن تعذّر تسجيل الحركة في السجل. سجّلها مرة أخرى مع ملاحظة بذلك.";
+    if (c === "cant_undo_in") return "لا يمكن حذف هذا الإدخال لأن جزءاً من كميته أُخرج بعده (الرصيد الحالي " + fmtQty(e.avail) + (e.unit ? " " + e.unit : "") + "). احذف حركات الإخراج اللاحقة أولاً.";
+    if (c === "not_allowed") return "هذا الحساب غير مصرّح له باستخدام النظام.";
+    if (c === "auth") { showLogin("انتهت الجلسة. سجّل الدخول مرة أخرى."); return "انتهت الجلسة."; }
+    if (c === "move_del_failed") return "عُدّل الرصيد لكن تعذّر حذف الحركة من السجل. أعد المحاولة.";
+    if (c === "quota_exceeded") return "امتلأت مساحة النظام. صدّر السجل واحذف أصنافاً منتهية ثم أعد المحاولة.";
+    if (c === "local_failed") return "تعذّر الحفظ على هذا المتصفح.";
+    if (c === "invalid_argument" || c === "transform_error" || c === "revoked" || c === "not_granted" ||
+        c === "capability_disabled" || c === "capability_removed") {
+      setReadOnly();
+      return "لا يمكن الحفظ من هذا الحساب، فالنظام للعرض فقط.";
+    }
+    return "تعذّر الحفظ. تحقّق من الاتصال ثم أعد المحاولة.";
+  }
+  function setReadOnly() {
+    if (readOnly) return;
+    readOnly = true;
+    applyEditable(); render();
+  }
+  function touchMeta() {
+    metaDirty = true;
+    clearTimeout(metaTimer);
+    metaTimer = setTimeout(flushMeta, 500);
+    updateStatus();
+  }
+  async function flushMeta() {
+    clearTimeout(metaTimer); metaTimer = 0;
+    if (metaInflight) { metaAgain = true; return; }
+    metaInflight = true;
+    var ok = true;
+    try { await run(function () { return retry(function () { return store.saveMeta(); }); }); }
+    catch (e) { ok = false; note(errText(e), true); }
+    metaInflight = false;
+    if (metaAgain && ok) { metaAgain = false; return flushMeta(); }
+    metaAgain = false;
+    if (!metaTimer) metaDirty = false;
+    updateStatus();
+  }
+
+  async function doIn(o) {
+    var line = findLine(o.row, o.col, o.name, o.code);
+    var res = await q(sb.rpc("stock_in", {
+      p_stock_id: line ? line.id : null, p_name: o.name, p_code: o.code, p_unit: o.unit, p_qty: o.qty,
+      p_row: o.row, p_col: o.col, p_person_name: o.pname, p_person_phone: o.pphone, p_note: o.note }));
+    scheduleReload(0);
+    return { id: res.stock_id, after: Number(res.after), unit: res.unit, name: res.name };
+  }
+  async function doOut(o) {
+    var s = stock.get(o.id), res;
+    try {
+      res = await q(sb.rpc("stock_out", { p_stock_id: o.id, p_qty: o.qty, p_person_name: o.pname,
+                                          p_person_phone: o.pphone, p_note: o.note }));
+    } catch (e) { if (e && e.code === "insufficient" && s) e.unit = s.unit; throw e; }
+    scheduleReload(0);
+    return { after: Number(res.after), s: { name: res.name, unit: res.unit, row: res.row, col: res.col } };
+  }
+  /* Deleting a movement reverses its effect on the balance, corrects the later "balance after"
+     figures, and removes the item from its cell when nothing is left of it (all in the database). */
+  async function doDeleteMove(m) {
+    var s = stock.get(m.stockId), res;
+    try { res = await q(sb.rpc("delete_move", { p_move_id: m.id })); }
+    catch (e) { if (e && e.code === "cant_undo_in" && s) e.unit = s.unit; throw e; }
+    scheduleReload(0);
+    return { after: res.after == null ? null : Number(res.after), unit: res.unit, removed: !!res.removed, cell: res.cell };
+  }
+  function findMove(id) {
+    var m = moves.find(function (x) { return x.id === id; });
+    if (!m && histCache) m = histCache.list.find(function (x) { return x.id === id; });
+    return m || null;
+  }
+  function delButton(m) {
+    var b = el("button", "del" + (armedMove === m.id ? " armed" : ""), armedMove === m.id ? "تأكيد الحذف" : "حذف");
+    b.type = "button"; b.dataset.del = m.id; b.disabled = moveDelBusy;
+    b.setAttribute("aria-label", armedMove === m.id ? "اضغط مرة ثانية لتأكيد حذف الحركة" : "احذف هذه الحركة");
+    return b;
+  }
+  async function onDeleteClick(id) {
+    if (!canEdit() || moveDelBusy || !id) return;
+    var m = findMove(id);
+    if (!m) return;
+    if (armedMove !== id) {
+      armedMove = id;
+      clearTimeout(armTimer);
+      armTimer = setTimeout(function () { armedMove = null; paintLog(); paintDetail(); }, 4000);
+      paintLog(); paintDetail();
+      return;
+    }
+    clearTimeout(armTimer); armedMove = null; moveDelBusy = true;
+    paintLog(); paintDetail();
+    try {
+      var res = await run(function () { return doDeleteMove(m); });
+      var what = (m.type === "in" ? "إدخال " : "إخراج ") + fmtQty(m.qty) + (m.unit ? " " + m.unit : "") + " من «" + m.name + "»";
+      if (res.removed) {
+        note("حُذفت حركة " + what + "، ولم تبق له حركات فأُزيل من الخانة " + res.cell + ".");
+        if (openId === m.stockId) { openId = null; histCache = null; }
+      } else {
+        note("حُذفت حركة " + what + (res.after != null ? "، والرصيد الآن " + fmtQty(res.after) + (res.unit ? " " + res.unit : "") : "") + ".");
+      }
+      if (openId) { histCache = null; openItem(openId); }
+    } catch (err) { note(errText(err), true); }
+    moveDelBusy = false;
+    render();
+  }
+
+  /* ---------- rendering ---------- */
+  var grid = $("grid"), sheet = $("sheet");
+  function build() {
+    var d = dims(), sig = d.r + "x" + d.c + ":" + S.dir;
+    if (sig === builtSig) return;
+    builtSig = sig;
+    sheet.dir = S.dir;
+    grid.style.setProperty("--cols", d.c);
+    var cg = el("colgroup"), c0 = el("col", "col-head"); cg.appendChild(c0);
+    for (var j = 1; j <= d.c; j++) cg.appendChild(el("col"));
+    var thead = el("thead"), hr = el("tr"), corner = el("td", "corner");
+    hr.appendChild(corner);
+    for (j = 1; j <= d.c; j++) { var th = el("th", null, String(j)); th.scope = "col"; th.id = "h-c-" + j; hr.appendChild(th); }
+    thead.appendChild(hr);
+    var tbody = el("tbody");
+    for (var i = 0; i < d.r; i++) {
+      var id = rowLabel(i), tr = el("tr"), rh = el("th", null, id);
+      rh.scope = "row"; rh.id = "h-r-" + id; tr.appendChild(rh);
+      for (j = 1; j <= d.c; j++) {
+        var td = el("td"), b = el("button", "cell");
+        b.type = "button"; b.id = "cell-" + id + j; b.dataset.row = id; b.dataset.col = String(j);
+        td.appendChild(b); tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    grid.replaceChildren(cg, thead, tbody);
+  }
+  function paintCells(map) {
+    var hits = 0;
+    grid.querySelectorAll(".cell").forEach(function (b) {
+      var key = b.dataset.row + b.dataset.col, all = map.get(key) || [];
+      var hit = query && all.some(function (x) { return matchesStock(x.s); });
+      // The grid shows what is physically in the cell; zero-balance items stay reachable from the cell's list.
+      var list = all.filter(function (x) { return x.s.qty > 0; });
+      if (hit) hits++;
+      b.classList.toggle("sel", b.dataset.row === sel.row && Number(b.dataset.col) === sel.col);
+      b.classList.toggle("hit", !!hit);
+      b.classList.toggle("dim", !!query && !hit && list.length > 0);
+      b.setAttribute("aria-label", "الخانة " + key + (list.length ? ": " + list.map(function (x) {
+        return x.s.name + " " + fmtQty(x.s.qty) + (x.s.unit ? " " + x.s.unit : "");
+      }).join("، ") : "، فارغة"));
+      var sig = JSON.stringify(list.map(function (x) { return [x.s.name, x.s.qty]; }));
+      if (b.dataset.sig === sig) return;
+      b.dataset.sig = sig;
+      var nodes = [], shown = list.length > MAXCELL ? MAXCELL - 1 : MAXCELL;
+      list.slice(0, shown).forEach(function (x) {
+        var line = el("span", "it" + (x.s.qty > 0 ? "" : " zero"));
+        line.appendChild(el("span", "nm", x.s.name));
+        line.appendChild(el("span", "q", fmtQty(x.s.qty)));
+        nodes.push(line);
+      });
+      if (list.length > MAXCELL) nodes.push(el("span", "more", "+" + (list.length - shown) + " أخرى"));
+      b.replaceChildren.apply(b, nodes);
+    });
+    return hits;
+  }
+  function markHeaders() {
+    grid.querySelectorAll("th.on").forEach(function (th) { th.classList.remove("on"); });
+    var a = $("h-c-" + sel.col), b = $("h-r-" + sel.row);
+    if (a) a.classList.add("on");
+    if (b) b.classList.add("on");
+  }
+  function fillSelects() {
+    var d = dims(), fRow = $("f-row"), fCol = $("f-col");
+    if (fRow.options.length !== d.r) {
+      var o = [];
+      for (var i = 0; i < d.r; i++) { var op = el("option", null, rowLabel(i)); op.value = rowLabel(i); o.push(op); }
+      fRow.replaceChildren.apply(fRow, o);
+    }
+    if (fCol.options.length !== d.c) {
+      var p = [];
+      for (var j = 1; j <= d.c; j++) { var oc = el("option", null, String(j)); oc.value = String(j); p.push(oc); }
+      fCol.replaceChildren.apply(fCol, p);
+    }
+    if (rowIndex(sel.row) >= d.r) sel.row = rowLabel(d.r - 1);
+    if (sel.col > d.c) sel.col = d.c;
+    fRow.value = sel.row; fCol.value = String(sel.col);
+    $("f-addr").textContent = sel.row + sel.col;
+  }
+  function paintContents(map) {
+    var key = sel.row + sel.col, list = map.get(key) || [];
+    $("c-addr").textContent = key;
+    $("c-empty").hidden = list.length > 0;
+    var nodes = list.map(function (x) {
+      var li = el("li"), b = el("button", "line" + (x.s.qty > 0 ? "" : " zero"));
+      b.type = "button"; b.dataset.id = x.id;
+      b.appendChild(el("span", "nm", x.s.name));
+      var bal = el("span", "bal", fmtQty(x.s.qty));
+      if (x.s.unit) bal.appendChild(el("small", null, x.s.unit));
+      b.appendChild(bal);
+      if (x.s.code) b.appendChild(el("span", "cd", x.s.code));
+      li.appendChild(b);
+      return li;
+    });
+    $("c-list").replaceChildren.apply($("c-list"), nodes);
+  }
+  function paintOut(map) {
+    var selEl = $("out-item"), keep = selEl.value, list = (map.get(sel.row + sel.col) || []).filter(function (x) { return x.s.qty > 0; });
+    var opts = list.map(function (x) {
+      var op = el("option", null, x.s.name + (x.s.code ? " · " + x.s.code : "") + " — المتوفر " + fmtQty(x.s.qty) + (x.s.unit ? " " + x.s.unit : ""));
+      op.value = x.id; return op;
+    });
+    selEl.replaceChildren.apply(selEl, opts);
+    if (list.some(function (x) { return x.id === keep; })) selEl.value = keep;
+    $("out-empty").hidden = list.length > 0 || !canEdit();
+    var cur = stock.get(selEl.value);
+    $("out-avail").textContent = cur ? "المتوفر: " + fmtQty(cur.qty) + (cur.unit ? " " + cur.unit : "") : "";
+    var on = canEdit() && list.length > 0;
+    ["out-item", "out-qty", "out-pname", "out-pphone", "out-note"].forEach(function (k) { $(k).disabled = !on; });
+    $("out-submit").disabled = !on || outBusy;
+  }
+  function paintInMatch() {
+    var box = $("in-match"), name = $("in-name").value.trim();
+    if (!name) { box.hidden = true; return; }
+    var here = findLine(sel.row, sel.col, name, $("in-code").value.trim());
+    if (here) {
+      box.textContent = "موجود في هذه الخانة ورصيده " + fmtQty(here.s.qty) + (here.s.unit ? " " + here.s.unit : "") + ". ستُضاف الكمية إليه.";
+      box.hidden = false; return;
+    }
+    var n = norm(name), elsewhere = [];
+    stock.forEach(function (s) { if (norm(s.name) === n) elsewhere.push(s.row + s.col); });
+    if (elsewhere.length) {
+      box.textContent = "هذا الصنف موجود أيضاً في: " + elsewhere.slice(0, 6).join("، ") + ". سيُسجَّل في " + sel.row + sel.col + " رصيداً مستقلاً.";
+      box.hidden = false; return;
+    }
+    box.hidden = true;
+  }
+  function paintDetail() {
+    var det = $("detail"), s = openId ? stock.get(openId) : null;
+    if (!s) { det.hidden = true; $("contents").hidden = false; if (openId) { openId = null; } return; }
+    det.hidden = false; $("contents").hidden = true;
+    $("d-name").textContent = s.name;
+    $("d-bal").textContent = fmtQty(s.qty);
+    $("d-unit").textContent = s.unit;
+    $("d-code").textContent = s.code || "—";
+    $("d-cell").textContent = s.row + s.col;
+    $("d-last").textContent = s.lastMoveAt ? fmtDate(s.lastMoveAt) + " · " + fmtTime(s.lastMoveAt) : "—";
+    $("d-note").textContent = s.note || "—";
+    $("d-actions").hidden = !canEdit();
+    $("d-out").disabled = !(s.qty > 0);
+    $("e-delete").hidden = s.qty > 0;
+    var list = histCache && histCache.id === openId ? mergeHist(histCache.list) : moves.filter(function (m) { return m.stockId === openId; });
+    var nodes = list.slice(0, 100).map(function (m) {
+      var li = el("li");
+      li.appendChild(el("span", "pill " + m.type, m.type === "in" ? "وارد" : "صادر"));
+      var who = el("span", "who");
+      var sq = el("bdi", "mono q-" + m.type, (m.type === "in" ? "+" : "−") + fmtQty(m.qty)); sq.dir = "ltr";
+      who.appendChild(sq);
+      who.appendChild(document.createTextNode(" · " + (m.pname || "—") + (m.pphone ? " · " : "")));
+      if (m.pphone) { var ph = el("bdi", "mono", m.pphone); ph.dir = "ltr"; who.appendChild(ph); }
+      li.appendChild(who);
+      li.appendChild(el("span", "when", fmtDate(m.at) + " · " + fmtTime(m.at) + (m.after != null ? " · الرصيد بعدها " + fmtQty(m.after) : "")));
+      if (m.note) li.appendChild(el("span", "nt", m.note));
+      if (canEdit() && m.id) li.appendChild(delButton(m));
+      return li;
+    });
+    $("d-moves").replaceChildren.apply($("d-moves"), nodes);
+    $("d-moves-empty").hidden = nodes.length > 0;
+  }
+  function mergeHist(list) {
+    var seen = new Set(list.map(function (m) { return m.at + m.type + m.qty; })), extra = [];
+    moves.forEach(function (m) { if (m.stockId === openId && !seen.has(m.at + m.type + m.qty)) extra.push(m); });
+    return extra.concat(list).sort(byAtDesc);
+  }
+  function paintLog() {
+    var list = moves.filter(function (m) { return (logFilter === "all" || m.type === logFilter) && matchesMove(m); });
+    var rows = list.slice(0, logLimit).map(function (m) {
+      var tr = el("tr"), td;
+      td = el("td", "num", fmtDate(m.at)); td.appendChild(el("small", null, fmtTime(m.at))); tr.appendChild(td);
+      td = el("td"); td.appendChild(el("span", "pill " + m.type, m.type === "in" ? "وارد" : "صادر")); tr.appendChild(td);
+      td = el("td");
+      if (m.stockId && stock.has(m.stockId)) { var lb = el("button", "linkbtn", m.name); lb.type = "button"; lb.dataset.open = m.stockId; td.appendChild(lb); }
+      else td.appendChild(document.createTextNode(m.name));
+      if (m.code) td.appendChild(el("small", "mono", m.code));
+      tr.appendChild(td);
+      td = el("td", "num", m.row + (m.col || "")); td.dir = "ltr"; tr.appendChild(td);
+      td = el("td", "num q-" + m.type);
+      var sq = el("bdi", null, (m.type === "in" ? "+" : "−") + fmtQty(m.qty)); sq.dir = "ltr";
+      td.appendChild(sq); if (m.unit) td.appendChild(document.createTextNode(" " + m.unit));
+      tr.appendChild(td);
+      tr.appendChild(el("td", "num", m.after != null ? fmtQty(m.after) : "—"));
+      tr.appendChild(el("td", null, m.pname || "—"));
+      td = el("td", "num", m.pphone || "—"); td.dir = "ltr"; tr.appendChild(td);
+      tr.appendChild(el("td", "nt", m.note || ""));
+      td = el("td");
+      if (canEdit() && m.id) td.appendChild(delButton(m));
+      tr.appendChild(td);
+      return tr;
+    });
+    $("log-body").replaceChildren.apply($("log-body"), rows);
+    $("log-empty").hidden = rows.length > 0;
+    $("log-empty").textContent = moves.length ? "لا حركات تطابق التصفية أو البحث." : "لم تُسجَّل أي حركة بعد. ابدأ بإدخال أول صنف من النموذج.";
+    $("log-more").hidden = list.length <= logLimit;
+  }
+  function paintStats(map) {
+    var avail = 0, cells = 0, today = dayKey(new Date().toISOString()), tin = 0, tout = 0;
+    stock.forEach(function (s) { if (s.qty > 0) avail++; });
+    map.forEach(function (l) { if (l.some(function (x) { return x.s.qty > 0; })) cells++; });
+    moves.forEach(function (m) { if (dayKey(m.at) === today) { if (m.type === "in") tin++; else tout++; } });
+    var d = dims();
+    $("st-items").textContent = String(avail);
+    $("st-cells").replaceChildren(document.createTextNode(String(cells)), el("small", null, "من " + (d.r * d.c)));
+    $("st-in").textContent = String(tin);
+    $("st-out").textContent = String(tout);
+  }
+  function paintLists() {
+    var names = new Set(), pn = [];
+    stock.forEach(function (s) { names.add(s.name); });
+    people.forEach(function (p) { pn.push(p.name); });
+    var mk = function (v) { var o = el("option"); o.value = v; return o; };
+    var nl = Array.from(names).sort(function (a, b) { return a.localeCompare(b, "ar"); });
+    if ($("dl-names").options.length !== nl.length) $("dl-names").replaceChildren.apply($("dl-names"), nl.map(mk));
+    pn.sort(function (a, b) { return a.localeCompare(b, "ar"); });
+    if ($("dl-people").options.length !== pn.length) $("dl-people").replaceChildren.apply($("dl-people"), pn.map(mk));
+  }
+  function updateControls() {
+    var d = dims(), on = canEdit();
+    $("col-count").textContent = String(d.c);
+    $("row-count").textContent = String(d.r);
+    $("col-minus").disabled = !on || d.c <= 1;
+    $("col-plus").disabled = !on || d.c >= MAXC;
+    $("row-minus").disabled = !on || d.r <= 1;
+    $("row-plus").disabled = !on || d.r >= MAXR;
+    $("dir-toggle").textContent = S.dir === "rtl" ? "ابدأ الترقيم من اليسار" : "ابدأ الترقيم من اليمين";
+  }
+  function updateStatus() {
+    var st = $("status");
+    if (!ready) { st.textContent = loadError || "جارٍ التحميل…"; return; }
+    if (readOnly) st.textContent = "للعرض فقط";
+    else if (pending || metaDirty) st.textContent = "جارٍ الحفظ…";
+    else st.textContent = mode === "local" ? "محفوظ على هذا المتصفح فقط" : "كل حركة تُحفظ تلقائياً";
+  }
+  function applyEditable() {
+    var on = canEdit();
+    ["f-row", "f-col", "in-name", "in-code", "in-unit", "in-qty", "in-pname", "in-pphone", "in-note"].forEach(function (k) { $(k).disabled = !on; });
+    $("in-submit").disabled = !on || inBusy;
+    $("wh-name").readOnly = !on;
+    $("seg").hidden = readOnly; $("where").hidden = readOnly;
+    $("form-in").hidden = readOnly || tab !== "in";
+    $("form-out").hidden = readOnly || tab !== "out";
+    $("panel-title").hidden = !readOnly;
+    $("col-stepper").hidden = readOnly; $("row-stepper").hidden = readOnly; $("dir-toggle").hidden = readOnly;
+    $("dir-toggle").disabled = !on;
+    if (readOnly) $("hint").textContent = "اضغط على أي خانة لترى أصنافها وأرصدتها، ثم على الصنف لترى حركاته، أو ابحث باسم الصنف أو رقمه.";
+  }
+  function render() {
+    build();
+    var map = byCell();
+    var hits = paintCells(map);
+    $("found").textContent = query ? (hits ? "في " + hits + " " + (hits === 1 ? "خانة" : "خانات") : "لا نتائج") : "";
+    fillSelects();
+    markHeaders();
+    paintContents(map);
+    paintOut(map);
+    paintInMatch();
+    paintDetail();
+    paintLog();
+    paintStats(map);
+    paintLists();
+    var wh = $("wh-name");
+    if (wh.value !== S.title && !(document.activeElement === wh && metaDirty)) wh.value = S.title;
+    updateControls();
+    updateStatus();
+  }
+  function note(msg, warn) {
+    var n = $("note");
+    n.textContent = msg; n.classList.toggle("warn", !!warn); n.hidden = false;
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function () { n.hidden = true; }, 6000);
+  }
+  function showErr(id, msg) { $(id).textContent = msg || ""; $(id).hidden = !msg; }
+
+  /* ---------- interactions ---------- */
+  function setTab(t) {
+    tab = t;
+    $("tab-in").setAttribute("aria-selected", String(t === "in"));
+    $("tab-out").setAttribute("aria-selected", String(t === "out"));
+    applyEditable(); render();
+  }
+  function selectCell(row, col) {
+    sel = { row: row, col: col };
+    openId = null; histCache = null; closeEdit();
+    render();
+  }
+  async function openItem(id) {
+    var s = stock.get(id);
+    if (!s) return;
+    openId = id; sel = { row: s.row, col: s.col }; closeEdit();
+    var token = ++histToken;
+    histCache = null;
+    render();
+    $("detail").scrollIntoView({ block: "nearest" });
+    try {
+      var list = await store.history(id);
+      if (token === histToken && openId === id) { histCache = { id: id, list: list }; paintDetail(); }
+    } catch (e) { /* the recent log still shows */ }
+  }
+  function closeEdit() {
+    $("d-form").hidden = true;
+    delArmed = false; clearTimeout(delTimer);
+    $("e-delete").textContent = "احذف الصنف من الخانة";
+    showErr("e-err", "");
+  }
+
+  $("tab-in").addEventListener("click", function () { setTab("in"); });
+  $("tab-out").addEventListener("click", function () { setTab("out"); });
+  $("seg").addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { setTab(tab === "in" ? "out" : "in"); $(tab === "in" ? "tab-in" : "tab-out").focus(); }
+  });
+  $("f-row").addEventListener("change", function () { selectCell($("f-row").value, sel.col); });
+  $("f-col").addEventListener("change", function () { selectCell(sel.row, Number($("f-col").value)); });
+  grid.addEventListener("click", function (e) {
+    var b = e.target.closest(".cell");
+    if (b) selectCell(b.dataset.row, Number(b.dataset.col));
+  });
+  $("c-list").addEventListener("click", function (e) {
+    var b = e.target.closest(".line");
+    if (b) openItem(b.dataset.id);
+  });
+  $("log-body").addEventListener("click", function (e) {
+    var d = e.target.closest("[data-del]");
+    if (d) { onDeleteClick(d.dataset.del); return; }
+    var b = e.target.closest("[data-open]");
+    if (b) openItem(b.dataset.open);
+  });
+  $("d-moves").addEventListener("click", function (e) {
+    var d = e.target.closest("[data-del]");
+    if (d) onDeleteClick(d.dataset.del);
+  });
+  $("d-back").addEventListener("click", function () { openId = null; histCache = null; closeEdit(); render(); });
+  $("in-name").addEventListener("input", function () {
+    var n = norm($("in-name").value), src = null;
+    stock.forEach(function (s) { if (!src && norm(s.name) === n) src = s; });
+    if (src) {
+      if (!$("in-code").value && src.code) $("in-code").value = src.code;
+      if (!$("in-unit").value && src.unit) $("in-unit").value = src.unit;
+    }
+    paintInMatch();
+  });
+  $("in-code").addEventListener("input", paintInMatch);
+  function fillPhone(nameId, phoneId) {
+    $(nameId).addEventListener("input", function () {
+      var n = norm($(nameId).value);
+      people.forEach(function (p) { if (norm(p.name) === n && !$(phoneId).value && p.phone) $(phoneId).value = p.phone; });
+    });
+  }
+  fillPhone("in-pname", "in-pphone");
+  fillPhone("out-pname", "out-pphone");
+  $("out-item").addEventListener("change", function () { render(); });
+
+  $("form-in").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (!canEdit() || inBusy) return;
+    var name = $("in-name").value.trim(), code = $("in-code").value.trim(), unit = $("in-unit").value.trim();
+    var qty = parseQty($("in-qty").value), pname = $("in-pname").value.trim(), pphone = latin($("in-pphone").value.trim());
+    var noteTxt = $("in-note").value.trim();
+    if (!name) { showErr("in-err", "اكتب اسم الصنف."); $("in-name").focus(); return; }
+    if (!(qty > 0)) { showErr("in-err", "اكتب كمية صحيحة أكبر من صفر."); $("in-qty").focus(); return; }
+    if (!pname) { showErr("in-err", "اكتب اسم من سلّم المخزون."); $("in-pname").focus(); return; }
+    showErr("in-err", "");
+    inBusy = true; $("in-submit").disabled = true;
+    var row = sel.row, col = sel.col;
+    try {
+      var res = await run(function () {
+        return doIn({ name: name, code: code, unit: unit, qty: qty, row: row, col: col, pname: pname, pphone: pphone, note: noteTxt });
+      });
+      note("أُدخل " + fmtQty(qty) + (res.unit ? " " + res.unit : "") + " من «" + res.name + "» إلى الخانة " + row + col + ". الرصيد الآن " + fmtQty(res.after) + ".");
+      ["in-name", "in-code", "in-unit", "in-qty", "in-note"].forEach(function (k) { $(k).value = ""; });
+      $("in-match").hidden = true;
+      $("in-name").focus();
+    } catch (err) { showErr("in-err", errText(err)); }
+    inBusy = false; $("in-submit").disabled = !canEdit();
+    render();
+  });
+
+  $("form-out").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (!canEdit() || outBusy) return;
+    var id = $("out-item").value, s = stock.get(id), qty = parseQty($("out-qty").value);
+    var pname = $("out-pname").value.trim(), pphone = latin($("out-pphone").value.trim()), noteTxt = $("out-note").value.trim();
+    if (!s) { showErr("out-err", "اختر الصنف الذي سيخرج."); $("out-item").focus(); return; }
+    if (!(qty > 0)) { showErr("out-err", "اكتب كمية صحيحة أكبر من صفر."); $("out-qty").focus(); return; }
+    if (qty > s.qty) { showErr("out-err", "الكمية المتوفرة " + fmtQty(s.qty) + (s.unit ? " " + s.unit : "") + " فقط."); $("out-qty").focus(); return; }
+    if (!pname) { showErr("out-err", "اكتب اسم من استلم المخزون."); $("out-pname").focus(); return; }
+    showErr("out-err", "");
+    outBusy = true; $("out-submit").disabled = true;
+    try {
+      var res = await run(function () { return doOut({ id: id, qty: qty, pname: pname, pphone: pphone, note: noteTxt }); });
+      note("أُخرج " + fmtQty(qty) + (res.s.unit ? " " + res.s.unit : "") + " من «" + res.s.name + "» من الخانة " + res.s.row + res.s.col + "، والمستلم " + pname + ". الرصيد الآن " + fmtQty(res.after) + ".");
+      ["out-qty", "out-note"].forEach(function (k) { $(k).value = ""; });
+      $("out-qty").focus();
+    } catch (err) { showErr("out-err", errText(err)); }
+    outBusy = false;
+    render();
+  });
+
+  $("d-in").addEventListener("click", function () {
+    var s = stock.get(openId); if (!s) return;
+    sel = { row: s.row, col: s.col };
+    $("in-name").value = s.name; $("in-code").value = s.code; $("in-unit").value = s.unit;
+    setTab("in"); $("in-qty").focus();
+  });
+  $("d-out").addEventListener("click", function () {
+    var s = stock.get(openId); if (!s) return;
+    var id = openId;
+    sel = { row: s.row, col: s.col };
+    setTab("out");
+    $("out-item").value = id; render(); $("out-qty").focus();
+  });
+  $("d-edit").addEventListener("click", function () {
+    var s = stock.get(openId); if (!s) return;
+    $("e-name").value = s.name; $("e-code").value = s.code; $("e-unit").value = s.unit; $("e-note").value = s.note;
+    $("d-form").hidden = false; $("e-name").focus();
+  });
+  $("e-cancel").addEventListener("click", closeEdit);
+  $("d-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var id = openId, name = $("e-name").value.trim();
+    if (!id || !canEdit()) return;
+    if (!name) { showErr("e-err", "اكتب اسم الصنف."); return; }
+    try {
+      await run(function () {
+        return retry(function () {
+          return store.update("stock", id, { name: name, code: $("e-code").value.trim().slice(0, 60), unit: $("e-unit").value.trim().slice(0, 30),
+                                             note: $("e-note").value.trim().slice(0, 1000), updatedAt: new Date().toISOString() });
+        });
+      });
+      closeEdit(); note("حُفظت بيانات «" + name + "».");
+    } catch (err) { showErr("e-err", errText(err)); }
+    render();
+  });
+  $("e-delete").addEventListener("click", async function () {
+    var id = openId, s = stock.get(id);
+    if (!s || s.qty > 0 || !canEdit()) return;
+    if (!delArmed) {
+      delArmed = true; $("e-delete").textContent = "اضغط مرة ثانية للتأكيد";
+      delTimer = setTimeout(function () { delArmed = false; $("e-delete").textContent = "احذف الصنف من الخانة"; }, 4000);
+      return;
+    }
+    closeEdit();
+    try {
+      await run(function () { return retry(function () { return store.del("stock", id); }); });
+      openId = null; note("حُذف «" + s.name + "» من الخانة " + s.row + s.col + ". حركاته السابقة باقية في السجل.");
+    } catch (err) { note(errText(err), true); }
+    render();
+  });
+
+  $("q").addEventListener("input", function () { query = norm($("q").value); logLimit = 50; render(); });
+  document.querySelectorAll(".chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      logFilter = c.dataset.filter; logLimit = 50;
+      document.querySelectorAll(".chip").forEach(function (x) { x.setAttribute("aria-pressed", String(x === c)); });
+      paintLog();
+    });
+  });
+  $("log-more").addEventListener("click", function () { logLimit += 50; paintLog(); });
+  $("wh-name").addEventListener("input", function () { if (!canEdit()) return; S.title = $("wh-name").value.slice(0, 80); touchMeta(); });
+
+  function resize(dr, dc) {
+    if (!canEdit()) return;
+    var d = dims(), used = false;
+    if (dc < 0) {
+      if (d.c <= 1) return;
+      stock.forEach(function (s) { if (s.col === d.c) used = true; });
+      if (used) { note("العمود " + d.c + " فيه أصناف. أخرجها أو احذفها أولاً.", true); return; }
+    }
+    if (dr < 0) {
+      if (d.r <= 1) return;
+      var last = rowLabel(d.r - 1);
+      stock.forEach(function (s) { if (s.row === last) used = true; });
+      if (used) { note("الصف " + last + " فيه أصناف. أخرجها أو احذفها أولاً.", true); return; }
+    }
+    S.rows = Math.min(MAXR, Math.max(1, d.r + dr));
+    S.cols = Math.min(MAXC, Math.max(1, d.c + dc));
+    touchMeta(); render();
+  }
+  $("col-minus").addEventListener("click", function () { resize(0, -1); });
+  $("col-plus").addEventListener("click", function () { resize(0, 1); });
+  $("row-minus").addEventListener("click", function () { resize(-1, 0); });
+  $("row-plus").addEventListener("click", function () { resize(1, 0); });
+  $("dir-toggle").addEventListener("click", function () {
+    if (!canEdit()) return;
+    S.dir = S.dir === "rtl" ? "ltr" : "rtl"; touchMeta(); render();
+  });
+
+  /* ---------- export ---------- */
+  var exportBtn = $("export-btn"), exportMenu = $("export-menu");
+  exportBtn.addEventListener("click", function () {
+    exportMenu.hidden = !exportMenu.hidden;
+    exportBtn.setAttribute("aria-expanded", String(!exportMenu.hidden));
+  });
+  document.addEventListener("click", function (e) {
+    if (!exportMenu.hidden && !e.target.closest(".menu")) { exportMenu.hidden = true; exportBtn.setAttribute("aria-expanded", "false"); }
+  });
+  function csvCell(v) { var s = String(v == null ? "" : v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  exportMenu.addEventListener("click", async function (e) {
+    var b = e.target.closest("[data-export]");
+    if (!b) return;
+    exportMenu.hidden = true; exportBtn.setAttribute("aria-expanded", "false");
+    var kind = b.dataset.export, stamp = dayKey(new Date().toISOString()), rows, filename;
+    if (kind === "stock") {
+      rows = [["الخانة", "الصف", "العمود", "الصنف", "رقم الصنف", "الرصيد", "الوحدة", "آخر حركة", "ملاحظات"]];
+      Array.from(stock.values()).sort(function (a, b2) {
+        return rowIndex(a.row) - rowIndex(b2.row) || a.col - b2.col || a.name.localeCompare(b2.name, "ar");
+      }).forEach(function (s) {
+        rows.push([s.row + s.col, s.row, s.col, s.name, s.code, s.qty, s.unit, s.lastMoveAt ? fmtDate(s.lastMoveAt) + " " + fmtTime(s.lastMoveAt) : "", s.note]);
+      });
+      filename = "أرصدة المخزون " + stamp + ".csv";
+    } else {
+      var all = moves;
+      try { all = await store.allMoves(); } catch (err) { /* fall back to the loaded moves */ }
+      rows = [["التاريخ", "الوقت", "النوع", "الصنف", "رقم الصنف", "الخانة", "الكمية", "الوحدة", "الرصيد بعد الحركة", "الشخص", "الجوال", "ملاحظات"]];
+      all.forEach(function (m) {
+        rows.push([fmtDate(m.at), fmtTime(m.at), m.type === "in" ? "وارد" : "صادر", m.name, m.code, m.row + (m.col || ""), m.qty, m.unit,
+                   m.after == null ? "" : m.after, m.pname, m.pphone, m.note]);
+      });
+      filename = "سجل حركات المخزون " + stamp + ".csv";
+    }
+    var csv = rows.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
+    try {
+      var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+      note("نُزّل الملف «" + filename + "».");
+      return;
+    } catch (err) { /* fall back to copying */ }
+    var fb = $("copy-fallback");
+    try {
+      await navigator.clipboard.writeText(csv);
+      fb.hidden = true;
+      note("تعذّر تنزيل الملف هنا، فنُسخ محتواه. الصقه في Excel.");
+    } catch (err) {
+      fb.hidden = false; fb.value = csv; fb.focus(); fb.select();
+      note("تعذّر تنزيل الملف هنا. النص محدّد أسفل السجل، انسخه والصقه في Excel.", true);
+    }
+  });
+
+  /* ---------- sign-in and start ---------- */
+  var pollTimer = 0, channel = null;
+  function showLoginErr(msg) { $("login-err").textContent = msg || ""; $("login-err").hidden = !msg; }
+  function showLogin(msg) {
+    ready = false;
+    $("boot").hidden = true; $("app-root").hidden = true; $("login").hidden = false;
+    showLoginErr(msg);
+    if (channel && sb) { sb.removeChannel(channel); channel = null; }
+    clearInterval(pollTimer);
+    setTimeout(function () { $("login-email").focus(); }, 0);
+  }
+  async function enterApp() {
+    $("boot").hidden = true; $("login").hidden = true; $("app-root").hidden = false;
+    loadError = ""; updateStatus();
+    var member = false;
+    try { member = await q(sb.rpc("is_member")); } catch (e) { member = false; }
+    if (!member) {
+      await sb.auth.signOut();
+      showLogin("هذا الحساب غير مصرّح له باستخدام النظام.");
+      return;
+    }
+    try { await loadAll(); }
+    catch (e) { loadError = "تعذّر تحميل البيانات. تحقّق من الاتصال ثم أعد فتح الصفحة."; updateStatus(); return; }
+    mode = "db"; ready = true;
+    applyEditable(); render();
+    channel = sb.channel("inventory")
+      .on("postgres_changes", { event: "*", schema: "public" }, function () { scheduleReload(); })
+      .subscribe();
+    clearInterval(pollTimer);
+    pollTimer = setInterval(function () { if (!document.hidden) scheduleReload(0); }, 60000);
+  }
+  $("login-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var email = $("login-email").value.trim(), pass = $("login-pass").value;
+    if (!email || !pass) { showLoginErr("اكتب البريد الإلكتروني وكلمة المرور."); return; }
+    $("login-btn").disabled = true; showLoginErr("");
+    var res = await sb.auth.signInWithPassword({ email: email, password: pass });
+    $("login-btn").disabled = false;
+    if (res.error) { showLoginErr("البريد الإلكتروني أو كلمة المرور غير صحيحة."); return; }
+    $("login-pass").value = "";
+    enterApp();
+  });
+  $("logout").addEventListener("click", async function () {
+    await sb.auth.signOut();
+    stock = new Map(); moves = []; people = new Map(); openId = null; histCache = null;
+    render();
+    showLogin("");
+  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && ready) scheduleReload(0); });
+
+  $("dl-units").replaceChildren.apply($("dl-units"), UNITS.map(function (u) { var o = el("option"); o.value = u; return o; }));
+  render();
+  (async function boot() {
+    if (!window.supabase || SUPABASE_URL.indexOf("__") === 0) {
+      $("boot").textContent = "إعداد الاتصال بقاعدة البيانات غير مكتمل.";
+      return;
+    }
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    var got = await sb.auth.getSession();
+    if (got.data && got.data.session) enterApp(); else showLogin("");
+  })();
+})();
+</script>
+</body>
+</html>
